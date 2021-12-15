@@ -3,17 +3,40 @@ cRes = {'': 1}
 
 dwDie = [1,2,2,3,3,4].sort()
 
-cRes = addRoll(cRes, dwDie)
-cRes = addRoll(cRes, dwDie)
-cRes = rerollOne(cRes, dwDie)
+rolls = []
+
+const TITLE = Symbol('title')
+
+for (let rollCount = 1; rollCount <= 4; rollCount++) {
+	rolls[rollCount] = addRoll({'': 1}, dwDie, rollCount)
+	rolls[rollCount][TITLE] = '' + rollCount + ' dice'
+}
+
+// cRes = addRoll(cRes, dwDie)
+// cRes = addRoll(cRes, dwDie)
+// cRes = addRoll(cRes, dwDie)
+// cRes = addRoll(cRes, dwDie)
+// cRes = rerollOne(cRes, dwDie)
 // printCounts(cRes)
 // printResults(cRes)
-const sss = calcSuccessChances(cRes)
-printSuccesses(sss)
+// const sss = calcSuccessChances(rolls[1])
+rolls.forEach( (r, index) => {
+	printSuccesses( calcSuccessChances(r) )
+})
 
+sssList = rolls.map( r => calcSuccessChances(r) )
+
+printSuccessTable(sssList)
 // --------------------------------------------------------
 // --------------------------------------------------------
-function addRoll(results, die) {
+function addRoll(results, die, rollsToAdd=1) {
+
+	if (rollsToAdd > 1) {
+		for (let r=1; r<rollsToAdd; r++) {
+			results = addRoll(results, die)
+		}
+	}
+
 	newRes = {}
 	for (const [roll, count] of Object.entries(results)) {
 		let rollList = roll.split(',').map(r => +r)
@@ -110,13 +133,40 @@ function calcSuccessChances(results) {
 		const successChance = runningRollCount / rollCount
 		sss[r] = successChance
 	})
+	if (results[TITLE]) {
+		sss[TITLE] = results[TITLE]
+	}
 	return sss
 }
 // --------------------------------------------------------
-function printSuccesses(sss) {
+function printSuccesses(sss, rollInfo="---") {
+	console.log(rollInfo)
 	sss.forEach( (chance, result) =>
 		console.log(widen(result, 3) + ' or better: ' + widen((chance * 100).toFixed(2), 6) + ' %')
 	)
+}
+// --------------------------------------------------------
+function printSuccessTable(sssList) {
+	const nCols = sssList.length
+	const nRows = sssList.reduce( (rows, s) => Math.max(rows, s.length), 0 )
+
+	sssList.sort( (s1, s2) => s1.length - s2.length )
+
+	console.log({nRows, nCols})
+
+	console.log(widen('', 15) + sssList.map(s => widen(s[TITLE], 13)).join(''))
+
+	for (let r = 1; r < nRows; r++) {
+		console.log([
+			widen(widen(r, 3) + ' or better: ', 15),
+			...(sssList.map( s => widen((s[r] * 100).toFixed(2) + ' %', 13)))
+		].join(''))
+	}
+
+	// console.log(rollInfo)
+	// sss.forEach( (chance, result) =>
+	// 	console.log(widen(result, 3) + ' or better: ' + widen((chance * 100).toFixed(2), 6) + ' %')
+	// )
 }
 // --------------------------------------------------------
 function widen(str, width, pad=' ') {
